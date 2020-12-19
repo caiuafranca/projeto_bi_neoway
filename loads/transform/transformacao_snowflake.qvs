@@ -7,9 +7,7 @@ LOAD cd_cnpj as sk_cnae,
 FROM
 [..\..\files\dataMirrors\extract_cnae.csv]
 (txt, codepage is 28591, embedded labels, delimiter is ';', msq);
-
 STORE DIM_CNAE INTO '..\..\files\dataTransformed\DIM_CNAE.qvd';
-STORE DIM_CNAE INTO '..\..\files\storage_pbi\DIM_CNAE.csv'(txt);
 
 
 DIM_SETOR_ATIVIDADE:
@@ -19,9 +17,7 @@ LOAD ramo_atividade,
 FROM
 [..\..\files\dataMirrors\extract_setor_atividades.csv]
 (txt, utf8, embedded labels, delimiter is ';', msq);
-
 STORE DIM_SETOR_ATIVIDADE INTO '..\..\files\dataTransformed\DIM_SETOR_ATIVIDADE.qvd';
-STORE DIM_SETOR_ATIVIDADE INTO '..\..\files\storage_pbi\DIM_SETOR_ATIVIDADE.csv'(txt);
 
 EMPRESAS_TEMP:
 LOAD cd_cnpj, 
@@ -57,21 +53,18 @@ DIM_EMPRESAS:
 LOAD 
 	 cd_cnpj as sk_empresas,
      if(fl_matriz = 1, 'SIM', 'NAO') AS flag_matriz,  
-     nm_razao_social, 
+     nm_razao_social,
      cd_natureza_juridica, 
      de_natureza_juridica,      
      de_situacao, 
-     de_classif_natureza_juridica,       
-     qt_filial,  
+     de_classif_natureza_juridica,         
      de_saude_tributaria, 
      de_nivel_atividade,
      if(vl_total_veiculos_antt > 0, 'SIM', 'NAO') AS registro_antt,  
      if(fl_optante_simples = 1, 'SIM', 'NAO') AS flag_optante_simples,  
      if(fl_optante_simei = 1, 'SIM', 'NAO') AS flag_optante_simei
 Resident EMPRESAS_TEMP;
-
 STORE DIM_EMPRESAS INTO '..\..\files\dataTransformed\DIM_EMPRESAS.qvd';
-STORE DIM_EMPRESAS INTO '..\..\files\storage_pbi\DIM_EMPRESAS.csv'(txt);
 
 NoConcatenate
 DIM_TEMPO:
@@ -82,26 +75,22 @@ LOAD
 	year(dt_abertura) as ano	
 	
 Resident EMPRESAS_TEMP;
-
 STORE DIM_TEMPO INTO '..\..\files\dataTransformed\DIM_TEMPO.qvd';
-STORE DIM_TEMPO INTO '..\..\files\storage_pbi\DIM_TEMPO.csv'(txt);
 
 NoConcatenate
 DIM_REGIAO:
 LOAD 
-	 cd_cnpj as sk_regiao,     
+	cd_cnpj as sk_regiao,     
      nm_logradouro, 
      nu_logradouro, 
      cd_cep, 
-     nm_bairro, 
-     nm_municipio, 
-     sg_uf,     
+     nm_bairro,  
+     if(len(nm_municipio) > 1,nm_municipio, 'Estado Nao Informado') as nm_municipio,
+     if(len(sg_uf) > 1,sg_uf, 'Estado Nao Informado') as sg_uf,     
      vl_latitude, 
      vl_longitude      
 Resident EMPRESAS_TEMP;
-
 STORE DIM_REGIAO INTO '..\..\files\dataTransformed\DIM_REGIAO.qvd';
-STORE DIM_REGIAO INTO '..\..\files\storage_pbi\DIM_REGIAO.csv'(txt);
 
 
 FATO_EMPRESAS:
@@ -114,6 +103,7 @@ LOAD
      1 as quantidade_empresa,
      if(fl_matriz = 1, 1, 0) AS quantidade_empresas_matriz,
      if(fl_matriz <> 1, 1, 0) AS quantidade_empresas_filiais,
+     if(len(qt_filial) > 0, qt_filial, 0) AS quantidade_filiais_empresa,
      if(fl_optante_simples = 1 and fl_optante_simei = 1, 1, 0) AS quantidade_empresas_simples_simei,
      if(de_natureza_juridica = 'PUBLICO', 1, 0) AS quantidade_empresas_publicas,
      if(de_natureza_juridica = 'PRIVADO', 1, 0) AS quantidade_empresas_privadas,
@@ -130,9 +120,7 @@ LOAD
              if(vl_total_veiculos_leves+vl_total_veiculos_pesados >= 31 and vl_total_veiculos_leves+vl_total_veiculos_pesados <= 50,'31 a 50',
                if(vl_total_veiculos_leves+vl_total_veiculos_pesados > 50,'> 50','0 a 5')))))) as faixa_veiculos
 Resident EMPRESAS_TEMP;
-
 STORE FATO_EMPRESAS INTO '..\..\files\dataTransformed\FATO_EMPRESAS.qvd';
-STORE FATO_EMPRESAS INTO '..\..\files\storage_pbi\FATO_EMPRESAS.csv'(txt);
-
 
 DROP Table EMPRESAS_TEMP;
+
