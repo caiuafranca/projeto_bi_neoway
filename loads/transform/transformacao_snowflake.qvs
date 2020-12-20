@@ -1,5 +1,27 @@
+SET ThousandSep='.';
+SET DecimalSep=',';
+SET MoneyThousandSep='.';
+SET MoneyDecimalSep=',';
+SET MoneyFormat='R$#.##0,00;-R$#.##0,00';
+SET TimeFormat='hh:mm:ss';
+SET DateFormat='M/DD/YYYY';
+SET TimestampFormat='M/DD/YYYY hh:mm:ss[.fff]';
+SET FirstWeekDay=6;
+SET BrokenWeeks=1;
+SET ReferenceDay=0;
+SET FirstMonthOfYear=1;
+SET CollationLocale='pt-BR';
+SET MonthNames='jan;fev;mar;abr;mai;jun;jul;ago;set;out;nov;dez';
+SET LongMonthNames='janeiro;fevereiro;março;abril;maio;junho;julho;agosto;setembro;outubro;novembro;dezembro';
+SET DayNames='seg;ter;qua;qui;sex;sáb;dom';
+SET LongDayNames='segunda-feira;terça-feira;quarta-feira;quinta-feira;sexta-feira;sábado;domingo';
+
+//$(must_include='transformacao_snowflake.qvs');
+
 DIM_CNAE:
-LOAD cd_cnpj as sk_cnae, 
+LOAD 
+	 Hash128(cd_cnpj) as sk_cnae,
+	 cd_cnpj as cnpj_cnae, 
      cod_ordem, 
      cod_ramo, 
      desc_ramo, 
@@ -20,9 +42,10 @@ FROM
 STORE DIM_SETOR_ATIVIDADE INTO '..\..\files\dataTransformed\DIM_SETOR_ATIVIDADE.qvd';
 
 EMPRESAS_TEMP:
-LOAD cd_cnpj, 
+LOAD 
+     cd_cnpj, 
      fl_matriz, 
-     dt_abertura, 
+     date(dt_abertura,'MM/DD/YYYY') as dt_abertura, 
      nm_razao_social, 
      cd_natureza_juridica, 
      de_natureza_juridica, 
@@ -40,7 +63,8 @@ LOAD cd_cnpj,
      vl_total_veiculos_leves, 
      vl_total_veiculos_pesados, 
      fl_optante_simples, 
-     qt_filial, 
+     Replace(qt_filial,'.',',') as qt_filial,
+     qt_filial as qt_filial_original, 
      fl_optante_simei, 
      de_saude_tributaria, 
      de_nivel_atividade
@@ -51,8 +75,9 @@ FROM
 NoConcatenate
 DIM_EMPRESAS:
 LOAD 
-	 cd_cnpj as sk_empresas,
-     if(fl_matriz = 1, 'SIM', 'NAO') AS flag_matriz,  
+	 Hash128(cd_cnpj) as sk_empresas,
+	 cd_cnpj as cnpj_empresa,
+     if(fl_matriz = 1, 'SIM', 'NAO') AS flag_matriz,
      nm_razao_social,
      cd_natureza_juridica, 
      de_natureza_juridica,      
@@ -73,14 +98,13 @@ LOAD
 	dt_abertura as data,
 	month(dt_abertura) as mes,
 	year(dt_abertura) as ano	
-	
 Resident EMPRESAS_TEMP;
 STORE DIM_TEMPO INTO '..\..\files\dataTransformed\DIM_TEMPO.qvd';
 
 NoConcatenate
 DIM_REGIAO:
 LOAD 
-	cd_cnpj as sk_regiao,     
+	Hash128(cd_cnpj) as sk_regiao,
      nm_logradouro, 
      nu_logradouro, 
      cd_cep, 
@@ -92,13 +116,12 @@ LOAD
 Resident EMPRESAS_TEMP;
 STORE DIM_REGIAO INTO '..\..\files\dataTransformed\DIM_REGIAO.qvd';
 
-
 FATO_EMPRESAS:
 LOAD 
-     cd_cnpj as dw_key,
-     cd_cnpj as sk_empresas,
-     cd_cnpj as sk_cnae,
-     cd_cnpj as sk_regiao, 
+     Hash128(cd_cnpj) as dw_key,
+     Hash128(cd_cnpj) as sk_empresas,
+     Hash128(cd_cnpj) as sk_cnae,
+     Hash128(cd_cnpj) as sk_regiao, 
      dt_abertura as sk_tempo,
      1 as quantidade_empresa,
      if(fl_matriz = 1, 1, 0) AS quantidade_empresas_matriz,
@@ -109,10 +132,10 @@ LOAD
      if(de_natureza_juridica = 'PRIVADO', 1, 0) AS quantidade_empresas_privadas,
      if(de_natureza_juridica = 'MISTA', 1, 0) AS quantidade_empresas_mistas,
      if(de_situacao = 'ATIVA', 1, 0) AS quantidade_empresas_ativa,
-     if(de_situacao = 'BAIXADO', 1, 0) AS quantidade_empresas_baixada,        
-     vl_total_veiculos_antt, 
-     vl_total_veiculos_leves, 
-     vl_total_veiculos_pesados,
+     if(de_situacao = 'BAIXADO', 1, 0) AS quantidade_empresas_baixada,
+     num(if(len(vl_total_veiculos_antt), Replace(vl_total_veiculos_antt,'.',','))) as vl_total_veiculos_antt, 
+     num(if(len(vl_total_veiculos_leves), Replace(vl_total_veiculos_leves,'.',','))) as vl_total_veiculos_leves, 
+     num(if(len(vl_total_veiculos_pesados), Replace(vl_total_veiculos_pesados,'.',','))) as vl_total_veiculos_pesados,
      if(vl_total_veiculos_leves+vl_total_veiculos_pesados >= 0 and vl_total_veiculos_leves+vl_total_veiculos_pesados <= 5,'0 a 5',
        if(vl_total_veiculos_leves+vl_total_veiculos_pesados >= 6 and vl_total_veiculos_leves+vl_total_veiculos_pesados <= 10,'6 a 10',
          if(vl_total_veiculos_leves+vl_total_veiculos_pesados >= 11 and vl_total_veiculos_leves+vl_total_veiculos_pesados <= 15,'11 a 15',
@@ -123,4 +146,3 @@ Resident EMPRESAS_TEMP;
 STORE FATO_EMPRESAS INTO '..\..\files\dataTransformed\FATO_EMPRESAS.qvd';
 
 DROP Table EMPRESAS_TEMP;
-
