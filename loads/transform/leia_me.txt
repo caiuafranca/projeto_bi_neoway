@@ -1,0 +1,21 @@
+Na etapa de Transformação eu usei o QLIK, onde toda a transformação esta no arquivo 
+transformacao_snowflake.
+
+definições:
+Tipo de modelagem: 
+- Snowflake ()
+- desenho da modelagem encontra-se na pasta files/docs/modelagem.png
+
+transformações:
+- A maior parte da nesta etapa  de transformação foi criar o fato_empresas e as dimensões:
+    dim_empresa, dim_tempo, dim_regiao, que são provenientes do arquivo 
+    files/dataMirrors/extract_empresas.csv
+- Criação das chaves nas dimensões (SK_) e no fato (DW_,SK_)
+- Foi prerciso ajustar alguns formatos de valores, colunas faltantes (uf_sg e municipio - Missing Values)
+- Algumas regras de negocio tambem foi implementada nesta etapa:
+    - faixa de veículos (leves + pesados) -> 0 a 5, 6 a 10, 11 a 15, 16 a 30, 31 a 50, > 50;
+- Na tabela fato foi criado as metricas
+
+Salvamento dos arquivos:
+salvo os arquivos usando o padrão qlik (QVD), pensando em otimizar o processo de carga na etapa dataCloud
+files/dataTransformed/*.qvd

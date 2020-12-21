@@ -1,0 +1,7 @@
+Etapa onde criamos a nuvem de dados, fazemos uma validação
+dos numeros e carregamos os arquivos que vão servir de base para a solução do powerBI
+
+Etapas:
+1 - carga dos arquivos files/dataTransformed/
+2 - validação dos números
+3 - salvar as informações para a solução de powerBI em files/storage_pbi (arquivos no formato csv)

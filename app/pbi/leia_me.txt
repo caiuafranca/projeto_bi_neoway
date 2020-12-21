@@ -1,0 +1,4 @@
+Criação da aplicação no powerBI
+
+- Origem dos dados files/storage_pbi
+- criação dos graficos e visualizações

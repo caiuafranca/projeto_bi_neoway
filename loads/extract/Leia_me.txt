@@ -1,0 +1,24 @@
+Etapa de extração e uma primeira transformação feitas com Python:
+    - linguagem Python
+    - libs: Pandas, SQLAlchemy
+
+importDdSQLITE:
+    - escolhi essa base pela praticidade, porem o SQLAlchemy, faz em qualquer banco relacional  ou não basta passar os parametros.
+    - Origem do arquivo a ser importado files/spreadsheets/empresas.csv
+    - o SQLAlchemy eletuou uma criação de schema empresas e dentro uma tabela Empresas
+    - Destino do arquivo de dados (SQLITE) files/dataMirrors/empresas.db   
+
+Extração CNAE
+    - Origem de um arquivo CSV, localizado na pasta files/speedsheets
+    - o arquivo tinha campos multi-valorados, utilizer o pandas para efetuar o slip do delimitador '~@~'
+    - ainda com pandas fiz o merge das colunas para um unico dataframe
+    - e efetuei o salvamento em files/dataMirrors/extract_cnae.csv
+Extracao EMPRESAS
+    - Origem de um Banco SQLITE (relacional) onde com SQLAlchemy, peguei todos os arquivos (SELECT * FROM Empresas)
+    - Carregei o Arquivo files/spreadsheets/empresasCalc.csv, e fiz um join ao dataframe de empresas criando um novo dataframe (dt_empresas) usando o cd_cnpj, dropei a colunna de index gerada pelo pandas
+    - tratei as colunas vazias com o fillna()
+    - Salvei o dt_empresas na pasta files/dataMirrors/extract_empresas.csv
+Extração Setores e Atividades
+    - Origem do arquivo files/spreadsheets/Setores e Ramos de Atividade.csv
+    - o arquivo tinha na coluna Ramo Atividade dados que deverial ser preenchido com a informação do registro anterio, para isso eu usei a função pd.fillna(method=ffill) do pandas que faz isso.
+    - files/dataMirrors/extract_setor_atividades.csv

@@ -1,0 +1,3 @@
+Etapa final onde importamos a numem de dados loads/dataCloud/dataCloud.qvw 
+    - importar com o comando binary do qlik
+    - criação das visões
